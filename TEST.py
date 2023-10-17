@@ -6,11 +6,32 @@ import category_encoders as ce
 import sklearn
 from sklearn.preprocessing import MinMaxScaler
 from imblearn.over_sampling import SMOTE
+from sklearn.metrics import confusion_matrix, accuracy_score, mean_squared_error
 
 from GRANDE import GRANDE
 
+pd_list = []
+pf_list = []
+bal_list = []
+fir_list = []
+def classifier_eval(y_test, y_pred):
+    cm = confusion_matrix(y_test, y_pred)
+    print('혼동행렬 : ', cm)
+    PD = cm[1, 1] / (cm[1, 1] + cm[1, 0])
+    print('PD : ', PD)
+    PF = cm[0, 1] / (cm[0, 0] + cm[0, 1])
+    print('PF : ', PF)
+    balance = 1 - (((0 - PF) * (0 - PF) + (1 - PD) * (1 - PD)) / 2)
+    print('balance : ', balance)
+    FI = (cm[1, 1] + cm[0, 1]) / (cm[0, 0] + cm[0, 1] + cm[1, 0] + cm[1, 1])
+    FIR = (PD - FI) / PD
+    print('FIR : ', FIR)
+
+    return PD, PF, balance, FIR
+
+
 # CSV 파일 경로를 지정
-csv_file_path = "EQ.csv"
+csv_file_path = "JDT.csv"
 
 # CSV 파일을 데이터프레임으로 읽어오기
 df = pd.read_csv(csv_file_path)
@@ -27,7 +48,7 @@ X_temp, X_test, y_temp, y_test = train_test_split(X, y, test_size=0.2, random_st
 X_train, X_valid, y_train, y_valid = train_test_split(X_temp, y_temp, test_size=0.2, random_state=42)
 
 # K-겹 교차 검증을 설정합니다
-k = 5  # K 값 (원하는 폴드 수) 설정
+k = 10  # K 값 (원하는 폴드 수) 설정
 kf = KFold(n_splits=k, shuffle=True, random_state=42)
 
 scaler = MinMaxScaler()
@@ -94,12 +115,19 @@ for train_index, val_index in kf.split(X_train):
           y_val=y_valid)
 
 
-preds = model.predict(X_test)
+    preds = model.predict(X_test)
+    PD, PF, bal, FIR = preds
+    pd_list.append(PD)
+    pf_list.append(PF)
+    bal_list.append(bal)
+    fir_list.append(FIR)
 
-accuracy = sklearn.metrics.accuracy_score(y_test, np.round(preds[:,1]))
-f1_score = sklearn.metrics.f1_score(y_test, np.round(preds[:,1]), average='macro')
-roc_auc = sklearn.metrics.roc_auc_score(y_test, preds[:,1], average='macro')
+print(pd_list)
+print(pf_list)
+print(bal_list)
+print(fir_list)
 
-print('Accuracy:', accuracy)
-print('F1 Score:', f1_score)
-print('ROC AUC:', roc_auc)
+print('avg_PD: {}'.format((sum(pd_list) / len(pd_list))))
+print('avg_PF: {}'.format((sum(pf_list) / len(pf_list))))
+print('avg_balance: {}'.format((sum(bal_list) / len(bal_list))))
+print('avg_FIR: {}'.format((sum(fir_list) / len(fir_list))))
