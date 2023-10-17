@@ -30,8 +30,9 @@ def classifier_eval(y_test, y_pred):
     return PD, PF, balance, FIR
 
 
+
 # CSV 파일 경로를 지정
-csv_file_path = "JDT.csv"
+csv_file_path = "EQ.csv"
 
 # CSV 파일을 데이터프레임으로 읽어오기
 df = pd.read_csv(csv_file_path)
@@ -42,13 +43,14 @@ X = df.drop(columns=['class'])
 y = df['class']  # 'target' 열을 목표 변수로 사용
 
 
+
 X_temp, X_test, y_temp, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
 
 
 X_train, X_valid, y_train, y_valid = train_test_split(X_temp, y_temp, test_size=0.2, random_state=42)
 
 # K-겹 교차 검증을 설정합니다
-k = 10  # K 값 (원하는 폴드 수) 설정
+k = 5  # K 값 (원하는 폴드 수) 설정
 kf = KFold(n_splits=k, shuffle=True, random_state=42)
 
 scaler = MinMaxScaler()
@@ -97,7 +99,7 @@ for train_index, val_index in kf.split(X_train):
 }
 
     args = {
-    'epochs': 100,
+    'epochs': 2,
     'early_stopping_epochs': 25,
     'batch_size': 64,
 
@@ -116,10 +118,16 @@ for train_index, val_index in kf.split(X_train):
 
 
     preds = model.predict(X_test)
-    PD, PF, bal, FIR = preds
+
+    threshold = 0.5  # 임계값 설정
+
+    binary_preds = [1 if prob >= threshold else 0 for prob in preds[:, 1]]  # preds[:, 1]는 1로 예측될 확률을 나타냄
+    binary_preds = np.array(binary_preds).reshape(-1, 1)  # NumPy 배열로 변환하고 열의 차원을 1로 지정
+    y_test = np.array(y_test).reshape(-1, 1)
+    PD, PF, balance, FIR = classifier_eval(y_test, binary_preds)
     pd_list.append(PD)
     pf_list.append(PF)
-    bal_list.append(bal)
+    bal_list.append(balance)
     fir_list.append(FIR)
 
 print(pd_list)
@@ -131,3 +139,10 @@ print('avg_PD: {}'.format((sum(pd_list) / len(pd_list))))
 print('avg_PF: {}'.format((sum(pf_list) / len(pf_list))))
 print('avg_balance: {}'.format((sum(bal_list) / len(bal_list))))
 print('avg_FIR: {}'.format((sum(fir_list) / len(fir_list))))
+
+
+
+
+
+
+
