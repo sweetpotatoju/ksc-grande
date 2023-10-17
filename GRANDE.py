@@ -292,6 +292,7 @@ class GRANDE(tf.keras.Model):
         if self.objective == 'binary':
             preds = tf.stack([1 - tf.squeeze(preds), tf.squeeze(preds)], axis=-1)
 
+
         return preds.numpy()
 
     def set_params(self, **kwargs):

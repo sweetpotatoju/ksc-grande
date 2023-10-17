@@ -6,8 +6,30 @@ import category_encoders as ce
 import sklearn
 from sklearn.preprocessing import MinMaxScaler
 from imblearn.over_sampling import SMOTE
+from sklearn.metrics import confusion_matrix, accuracy_score, mean_squared_error
 
 from GRANDE import GRANDE
+
+pd_list = []
+pf_list = []
+bal_list = []
+fir_list = []
+def classifier_eval(y_test, y_pred):
+    cm = confusion_matrix(y_test, y_pred)
+    print('혼동행렬 : ', cm)
+    PD = cm[1, 1] / (cm[1, 1] + cm[1, 0])
+    print('PD : ', PD)
+    PF = cm[0, 1] / (cm[0, 0] + cm[0, 1])
+    print('PF : ', PF)
+    balance = 1 - (((0 - PF) * (0 - PF) + (1 - PD) * (1 - PD)) / 2)
+    print('balance : ', balance)
+    FI = (cm[1, 1] + cm[0, 1]) / (cm[0, 0] + cm[0, 1] + cm[1, 0] + cm[1, 1])
+    FIR = (PD - FI) / PD
+    print('FIR : ', FIR)
+
+    return PD, PF, balance, FIR
+
+
 
 # CSV 파일 경로를 지정
 csv_file_path = "EQ.csv"
@@ -19,6 +41,7 @@ df = pd.read_csv(csv_file_path)
 # 데이터프레임에서 특징(X)과 목표 변수(y) 추출
 X = df.drop(columns=['class'])
 y = df['class']  # 'target' 열을 목표 변수로 사용
+
 
 
 X_temp, X_test, y_temp, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
@@ -76,7 +99,7 @@ for train_index, val_index in kf.split(X_train):
 }
 
     args = {
-    'epochs': 100,
+    'epochs': 2,
     'early_stopping_epochs': 25,
     'batch_size': 64,
 
@@ -94,12 +117,32 @@ for train_index, val_index in kf.split(X_train):
           y_val=y_valid)
 
 
-preds = model.predict(X_test)
+    preds = model.predict(X_test)
 
-accuracy = sklearn.metrics.accuracy_score(y_test, np.round(preds[:,1]))
-f1_score = sklearn.metrics.f1_score(y_test, np.round(preds[:,1]), average='macro')
-roc_auc = sklearn.metrics.roc_auc_score(y_test, preds[:,1], average='macro')
+    threshold = 0.5  # 임계값 설정
 
-print('Accuracy:', accuracy)
-print('F1 Score:', f1_score)
-print('ROC AUC:', roc_auc)
+    binary_preds = [1 if prob >= threshold else 0 for prob in preds[:, 1]]  # preds[:, 1]는 1로 예측될 확률을 나타냄
+    binary_preds = np.array(binary_preds).reshape(-1, 1)  # NumPy 배열로 변환하고 열의 차원을 1로 지정
+    y_test = np.array(y_test).reshape(-1, 1)
+    PD, PF, balance, FIR = classifier_eval(y_test, binary_preds)
+    pd_list.append(PD)
+    pf_list.append(PF)
+    bal_list.append(balance)
+    fir_list.append(FIR)
+
+print(pd_list)
+print(pf_list)
+print(bal_list)
+print(fir_list)
+
+print('avg_PD: {}'.format((sum(pd_list) / len(pd_list))))
+print('avg_PF: {}'.format((sum(pf_list) / len(pf_list))))
+print('avg_balance: {}'.format((sum(bal_list) / len(bal_list))))
+print('avg_FIR: {}'.format((sum(fir_list) / len(fir_list))))
+
+
+
+
+
+
+
