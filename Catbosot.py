@@ -7,9 +7,9 @@ import sklearn
 from sklearn.preprocessing import MinMaxScaler
 from imblearn.over_sampling import SMOTE
 from sklearn.metrics import confusion_matrix, accuracy_score, mean_squared_error
+from catboost import CatBoostClassifier  # Import CatBoost
 
-from GRANDE import GRANDE
-
+# ...
 pd_list = []
 pf_list = []
 bal_list = []
@@ -32,7 +32,7 @@ def classifier_eval(y_test, y_pred):
 
 
 # CSV 파일 경로를 지정
-csv_file_path ="JDT.csv"
+csv_file_path = "LC.csv"
 
 # CSV 파일을 데이터프레임으로 읽어오기
 df = pd.read_csv(csv_file_path)
@@ -61,86 +61,32 @@ for train_index, val_index in kf.split(X_train):
     X_fold_train, X_fold_val = X_train.iloc[train_index], X_train.iloc[val_index]
     y_fold_train, y_fold_val = y_train.iloc[train_index], y_train.iloc[val_index]
 
-#전처리
+    # 전처리
     # Min-Max 정규화 수행(o)
     X_fold_train_normalized = scaler.fit_transform(X_fold_train)
     X_fold_val_normalized = scaler.transform(X_fold_val)
-
 
     # SMOTE를 사용하여 학습 데이터 오버샘플링
     smote = SMOTE(random_state=42)
     X_fold_train_resampled, y_fold_train_resampled = smote.fit_resample(X_fold_train_normalized, y_fold_train)
 
+    # CatBoost 모델 초기화 및 훈련 (replace XGBoost with CatBoost)
+    model = CatBoostClassifier(iterations=2048, learning_rate=0.01, depth=5, loss_function='Logloss', eval_metric='AUC', verbose=0)
+    model.fit(X_fold_train_resampled, y_fold_train_resampled)
 
+    # 예측
+    y_pred = model.predict(X_test_Nomalized)
 
-
-    params = {
-        'depth': 8,
-        'n_estimators': 2048,
-
-        'learning_rate_weights': 0.005,
-        'learning_rate_index': 0.01,
-        'learning_rate_values': 0.01,
-        'learning_rate_leaf': 0.01,
-
-        'optimizer': 'SWA',
-        'cosine_decay_steps': 0,
-
-        'initializer': 'RandomNormal',
-
-        'loss': 'crossentropy',
-        'focal_loss': False,
-
-        'from_logits': True,
-        'apply_class_balancing': True,
-
-        'dropout': 0.0,
-
-        'selected_variables': 0.8,
-        'data_subset_fraction': 1.0,
-}
-
-    args = {
-    'epochs': 500,
-    'early_stopping_epochs': 25,
-    'batch_size': 64,
-
-    'objective': 'binary',
-    'evaluation_metrics': ['F1'], # F1, Accuracy, R2
-    'random_seed': 42,
-    'verbose': 1,
-}
-
-    model = GRANDE(params=params, args=args)
-
-    model.fit(X_train= X_fold_train_resampled,
-          y_train=y_fold_train_resampled,
-          X_val=X_valid,
-          y_val=y_valid)
-
-
-    preds = model.predict(X_test_Nomalized)
-
-    threshold = 0.5  # 임계값 설정
-
-    binary_preds = [1 if prob >= threshold else 0 for prob in preds[:, 1]]  # preds[:, 1]는 1로 예측될 확률을 나타냄
-    binary_preds = np.array(binary_preds).reshape(-1, 1)  # NumPy 배열로 변환하고 열의 차원을 1로 지정
-    y_test = np.array(y_test).reshape(-1, 1)
-    PD, PF, balance, FIR = classifier_eval(y_test, binary_preds)
+    # Calculate evaluation metrics as before
+    PD, PF, balance, FIR = classifier_eval(y_test, y_pred)
     pd_list.append(PD)
     pf_list.append(PF)
     bal_list.append(balance)
     fir_list.append(FIR)
 
 
+
 print('avg_PD: {}'.format((sum(pd_list) / len(pd_list))))
 print('avg_PF: {}'.format((sum(pf_list) / len(pf_list))))
 print('avg_balance: {}'.format((sum(bal_list) / len(bal_list))))
 print('avg_FIR: {}'.format((sum(fir_list) / len(fir_list))))
-
-
-
-
-
-
-
