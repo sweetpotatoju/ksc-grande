@@ -17,6 +17,7 @@ print("씹씹인정")
 print('zz')
 print("이재혁똥꼬")
 
+print("ss222222")
 # ...
 pd_list = []
 pf_list = []
@@ -98,3 +99,4 @@ print('avg_PD: {}'.format((sum(pd_list) / len(pd_list))))
 print('avg_PF: {}'.format((sum(pf_list) / len(pf_list))))
 print('avg_balance: {}'.format((sum(bal_list) / len(bal_list))))
 print('avg_FIR: {}'.format((sum(fir_list) / len(fir_list))))
+
