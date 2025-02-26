@@ -10,6 +10,8 @@ from sklearn.metrics import confusion_matrix, accuracy_score, mean_squared_error
 from catboost import CatBoostClassifier  # Import CatBoos
 
 print("임창우 와꾸 쓰레기 인정?????")
+print("aaa")
+
 # ...
 pd_list = []
 pf_list = []
