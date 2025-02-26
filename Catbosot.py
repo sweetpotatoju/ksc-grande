@@ -15,6 +15,8 @@ print('edd')
 print("씹인정")
 print("씹씹인정")
 print('zz')
+print("이재혁똥꼬")
+
 print("ss222222")
 # ...
 pd_list = []
