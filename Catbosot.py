@@ -11,6 +11,7 @@ from catboost import CatBoostClassifier  # Import CatBoos
 
 print("임창우 와꾸 쓰레기 인정?????")
 print("aaa")
+print('edd')
 
 # ...
 pd_list = []
