@@ -9,6 +9,9 @@ from imblearn.over_sampling import SMOTE
 from sklearn.metrics import confusion_matrix, accuracy_score, mean_squared_error
 from catboost import CatBoostClassifier  # Import CatBoost
 
+print("임창우 와꾸 쓰레기 인정?????")
+print("aaa")
+
 # ...
 pd_list = []
 pf_list = []
