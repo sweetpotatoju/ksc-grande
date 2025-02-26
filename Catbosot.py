@@ -15,7 +15,7 @@ print('edd')
 print("씹인정")
 print("씹씹인정")
 print('zz')
-
+print("ss")
 # ...
 pd_list = []
 pf_list = []
